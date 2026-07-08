@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette — ported from the original CSS variables */
+  --color-void: #04050d;
+  --color-gold: #fbbf24;
+  --color-gold-2: #f59e0b;
+  --color-cyan: #22d3ee;
+  --color-violet: #a78bfa;
+  --color-pink: #f472b6;
+  --color-green: #34d399;
+  --color-green-2: #10b981;
+
+  --color-text: #f0f2ff;
+  --color-text-2: #8892b8;
+  --color-text-3: #4a5278;
+
+  --font-display: "Fraunces", serif;
+  --font-sans: "Outfit", sans-serif;
+}
+
+@layer base {
+  html {
+    font-size: 15px;
+  }
+  body {
+    background: var(--color-void);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+  }
+}
+
+/* Reusable utility-style classes for effects Tailwind doesn't express cleanly */
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+  }
+
+  .blue-gradient-text {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .blue-gradient-bg {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  }
+}
