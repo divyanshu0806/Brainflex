@@ -17,14 +17,16 @@ async function authFetch(path, options = {}) {
   return data
 }
 
-export const getDashboardStats = () => authFetch('/api/stats')
+export const getDashboardStats  = () => authFetch('/api/stats')
+export const getSolvedQuestions = () => authFetch('/api/solved')
+export const getAttemptedData   = () => authFetch('/api/attempted')
 
 export const getQuestions = (params = {}) => {
   const query = new URLSearchParams(params).toString()
   return authFetch(`/api/questions${query ? `?${query}` : ''}`)
 }
 
-export const getQuestion = (id) => authFetch(`/api/questions/${id}`)
+export const getQuestion  = (id) => authFetch(`/api/questions/${id}`)
 
 export const submitAnswer = (id, selected_option_id) =>
   authFetch(`/api/questions/${id}/answer`, {

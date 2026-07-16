@@ -1,3 +1,4 @@
+import { useStreak } from '../hooks/useStreak.js'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -47,6 +48,7 @@ export default function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const currentStreak = useStreak()
   const crumb = CRUMBS[location.pathname] || CRUMBS['/dashboard']
   const CrumbIcon = crumb.icon
 
@@ -148,7 +150,7 @@ export default function DashboardLayout() {
             {/* Streak */}
             <div className="flex items-center gap-1.5 bg-blue-500/10 border border-blue-400/25 rounded-full px-3.5 py-1.5 text-sm font-bold text-blue-300 select-none">
               <Flame size={14} className="text-blue-300" />
-              12-day streak
+              {currentStreak > 0 ? `${currentStreak}-day streak` : 'Start streak'}
             </div>
 
             {/* Notifications */}

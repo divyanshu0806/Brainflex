@@ -1,12 +1,11 @@
 const pool = require('../db/pool')
 
-// GET /api/stats  — everything the dashboard home needs
+// GET /api/stats  — dashboard home data
 async function getDashboardStats(req, res) {
   const user_id = req.user.id
 
   try {
     const [solved, accuracy, streak, recentAttempts, topicStrength] = await Promise.all([
-      // Total solved + completion rate
       pool.query(
         `SELECT
           COUNT(DISTINCT question_id) FILTER (WHERE is_correct = true) AS solved,
@@ -15,8 +14,6 @@ async function getDashboardStats(req, res) {
          FROM user_attempts WHERE user_id = $1`,
         [user_id]
       ),
-
-      // Accuracy by difficulty
       pool.query(
         `SELECT q.difficulty,
           ROUND(AVG(CASE WHEN ua.is_correct THEN 100.0 ELSE 0 END)) AS accuracy
@@ -26,22 +23,16 @@ async function getDashboardStats(req, res) {
          GROUP BY q.difficulty`,
         [user_id]
       ),
-
-      // Streak
       pool.query(
         'SELECT current_streak, longest_streak FROM streaks WHERE user_id = $1',
         [user_id]
       ),
-
-      // Recent 3 test sessions
       pool.query(
         `SELECT title, score, total_qs, duration_secs, completed_at
          FROM test_sessions WHERE user_id = $1
          ORDER BY completed_at DESC LIMIT 3`,
         [user_id]
       ),
-
-      // Topic strength
       pool.query(
         `SELECT q.topic,
           ROUND(AVG(CASE WHEN ua.is_correct THEN 100.0 ELSE 0 END)) AS strength
@@ -75,4 +66,119 @@ async function getDashboardStats(req, res) {
   }
 }
 
-module.exports = { getDashboardStats }
+// GET /api/solved  — all questions the user got correct
+async function getSolvedQuestions(req, res) {
+  const user_id = req.user.id
+
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT ON (ua.question_id)
+        q.id, q.question_text, q.topic, q.difficulty,
+        e.name AS exam,
+        ua.attempted_at,
+        (SELECT COUNT(*) FROM user_attempts ua2
+         WHERE ua2.question_id = q.id) AS total_attempts,
+        (SELECT COUNT(*) FROM user_attempts ua3
+         WHERE ua3.question_id = q.id AND ua3.is_correct = true) AS correct_attempts
+       FROM user_attempts ua
+       JOIN questions q ON ua.question_id = q.id
+       JOIN exams e ON q.exam_id = e.id
+       WHERE ua.user_id = $1 AND ua.is_correct = true
+       ORDER BY ua.question_id, ua.attempted_at DESC`,
+      [user_id]
+    )
+
+    const questions = result.rows.map((q) => ({
+      id: q.id,
+      question_text: q.question_text,
+      topic: q.topic,
+      difficulty: q.difficulty,
+      exam: q.exam,
+      attempted_at: q.attempted_at,
+      accuracy: Math.round((parseInt(q.correct_attempts) / parseInt(q.total_attempts)) * 100),
+      status: 'solved',
+    }))
+
+    // Summary by difficulty
+    const summary = {
+      Easy:   { solved: 0, total: 0 },
+      Medium: { solved: 0, total: 0 },
+      Hard:   { solved: 0, total: 0 },
+    }
+
+    // Get total questions per difficulty
+    const totals = await pool.query(
+      `SELECT difficulty, COUNT(*) as total FROM questions GROUP BY difficulty`
+    )
+    totals.rows.forEach((r) => {
+      if (summary[r.difficulty]) summary[r.difficulty].total = parseInt(r.total)
+    })
+
+    // Count solved per difficulty
+    questions.forEach((q) => {
+      if (summary[q.difficulty]) summary[q.difficulty].solved++
+    })
+
+    res.json({ questions, summary })
+  } catch (err) {
+    console.error('Solved error:', err.message)
+    res.status(500).json({ error: 'Server error fetching solved questions' })
+  }
+}
+
+// GET /api/attempted  — all questions the user has attempted
+async function getAttemptedQuestions(req, res) {
+  const user_id = req.user.id
+
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT ON (ua.question_id)
+        q.id, q.question_text, q.topic, q.difficulty,
+        e.name AS exam,
+        ua.is_correct,
+        ua.attempted_at,
+        (SELECT COUNT(*) FROM user_attempts ua2
+         WHERE ua2.question_id = q.id AND ua2.user_id = $1) AS attempt_count,
+        (SELECT COUNT(*) FROM user_attempts ua3
+         WHERE ua3.question_id = q.id AND ua3.user_id = $1 AND ua3.is_correct = true) AS correct_count
+       FROM user_attempts ua
+       JOIN questions q ON ua.question_id = q.id
+       JOIN exams e ON q.exam_id = e.id
+       WHERE ua.user_id = $1
+       ORDER BY ua.question_id, ua.attempted_at DESC`,
+      [user_id]
+    )
+
+    const questions = result.rows.map((q) => {
+      const attempts = parseInt(q.attempt_count)
+      const correct  = parseInt(q.correct_count)
+      return {
+        id: q.id,
+        question_text: q.question_text,
+        topic: q.topic,
+        difficulty: q.difficulty,
+        exam: q.exam,
+        attempted_at: q.attempted_at,
+        accuracy: attempts > 0 ? Math.round((correct / attempts) * 100) : 0,
+        status: correct > 0 ? 'solved' : 'attempted',
+        attempt_count: attempts,
+      }
+    })
+
+    // Stats summary
+    const scores = questions.map((q) => q.accuracy)
+    const summary = {
+      total: questions.length,
+      solved: questions.filter((q) => q.status === 'solved').length,
+      avgAccuracy: scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+      bestAccuracy: scores.length > 0 ? Math.max(...scores) : 0,
+    }
+
+    res.json({ questions, summary })
+  } catch (err) {
+    console.error('Attempted error:', err.message)
+    res.status(500).json({ error: 'Server error fetching attempted questions' })
+  }
+}
+
+module.exports = { getDashboardStats, getSolvedQuestions, getAttemptedQuestions }
