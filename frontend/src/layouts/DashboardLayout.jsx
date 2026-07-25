@@ -187,10 +187,16 @@ export default function DashboardLayout() {
         </AnchoredPopover>
       )}
       {openDropdown === 'user' && (
-        <AnchoredPopover anchorRef={userRef} popoverRef={popoverRef} width={240}>
-          <UserPopoverContent user={user} initials={initials} onLogout={handleLogout} />
-        </AnchoredPopover>
-      )}
+  <AnchoredPopover anchorRef={userRef} popoverRef={popoverRef} width={240}>
+    <UserPopoverContent 
+      user={user} 
+      initials={initials} 
+      onLogout={handleLogout}
+      navigate={navigate}
+      onClose={() => setOpenDropdown(null)}
+    />
+  </AnchoredPopover>
+)}
 
       <style>{`
         @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(60px,-40px) scale(1.1)} 66%{transform:translate(-40px,60px) scale(.95)} }
@@ -318,7 +324,7 @@ function NotificationsPopoverContent() {
   )
 }
 
-function UserPopoverContent({ user, initials, onLogout }) {
+function UserPopoverContent({ user, initials, onLogout, navigate, onClose })  {
   return (
     <>
       <div className="px-2 pt-1 pb-2.5 border-b border-white/[0.07] mb-1.5">
@@ -333,9 +339,9 @@ function UserPopoverContent({ user, initials, onLogout }) {
         </div>
       </div>
 
-      <PopoverRow icon={LayoutDashboard} label="Dashboard" />
-      <PopoverRow icon={User} label="Edit Profile" />
-      <PopoverRow icon={Trophy} label="Achievements" />
+      <PopoverRow icon={LayoutDashboard} label="Dashboard"    onClick={() => { navigate('/dashboard');          onClose() }} />
+<PopoverRow icon={User}            label="Edit Profile" onClick={() => { navigate('/dashboard/settings'); onClose() }} />
+<PopoverRow icon={Trophy}          label="Achievements"  onClick={() => { navigate('/dashboard/solved');   onClose() }} />
 
       <div className="h-px bg-white/[0.07] my-1.5" />
 
@@ -356,9 +362,10 @@ function UserPopoverContent({ user, initials, onLogout }) {
   )
 }
 
-function PopoverRow({ icon: Icon, label, danger }) {
+function PopoverRow({ icon: Icon, label, danger, onClick }) {
   return (
     <div
+      onClick={onClick}
       className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm cursor-pointer transition hover:bg-white/[0.05] ${
         danger ? 'text-pink-400' : 'text-text-2 hover:text-text'
       }`}

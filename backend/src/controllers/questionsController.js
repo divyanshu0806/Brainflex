@@ -162,19 +162,26 @@ async function updateStreak(user_id) {
 
     const { current_streak, last_active_date } = result.rows[0]
     const today = new Date().toISOString().split('T')[0]
-    const lastActive = last_active_date?.toISOString?.().split('T')[0] || null
+    const lastActive = last_active_date
+      ? new Date(last_active_date).toISOString().split('T')[0]
+      : null
 
-    let newStreak = current_streak
-    if (lastActive === today) return // already active today
-    if (lastActive === new Date(Date.now() - 86400000).toISOString().split('T')[0]) {
-      newStreak = current_streak + 1 // consecutive day
+    if (lastActive === today) return // already active today, no change
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    
+    let newStreak
+    if (lastActive === yesterday) {
+      newStreak = current_streak + 1 // consecutive day ✅
     } else {
-      newStreak = 1 // streak broken
+      newStreak = 1 // gap detected — reset streak ✅
     }
 
     await pool.query(
-      `UPDATE streaks SET current_streak = $1, last_active_date = $2,
-       longest_streak = GREATEST(longest_streak, $1) WHERE user_id = $3`,
+      `UPDATE streaks 
+       SET current_streak = $1, last_active_date = $2,
+       longest_streak = GREATEST(longest_streak, $1) 
+       WHERE user_id = $3`,
       [newStreak, today, user_id]
     )
   } catch (err) {
