@@ -20,6 +20,14 @@ async function authFetch(path, options = {}) {
 export const getDashboardStats  = () => authFetch('/api/stats')
 export const getSolvedQuestions = () => authFetch('/api/solved')
 export const getAttemptedData   = () => authFetch('/api/attempted')
+export const getAnalytics       = () => authFetch('/api/analytics')
+export const getAnalytics       = () => authFetch('/api/user/analytics')
+
+export const updateProfile = (data) =>
+  authFetch('/api/user/profile', { method: 'PUT', body: JSON.stringify(data) })
+
+export const changePassword = (data) =>
+  authFetch('/api/user/password', { method: 'PUT', body: JSON.stringify(data) })
 
 export const getQuestions = (params = {}) => {
   const query = new URLSearchParams(params).toString()

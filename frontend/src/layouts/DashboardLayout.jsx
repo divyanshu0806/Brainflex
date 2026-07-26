@@ -34,6 +34,7 @@ const CRUMBS = {
   '/dashboard/problems': { icon: Puzzle, label: 'Problems' },
   '/dashboard/solved': { icon: CheckCircle2, label: 'Solved' },
   '/dashboard/attempted': { icon: NotebookPen, label: 'Attempted' },
+  '/dashboard/analytics': { icon: LineChart, label: 'Analytics' },
 }
 
 const NOTIFICATIONS = [
@@ -119,7 +120,7 @@ export default function DashboardLayout() {
 
         <div className="w-7 h-px bg-white/[0.07] my-2" />
 
-        <RailButton to="#" label="Analytics" icon={LineChart} disabled />
+        <RailButton to="/dashboard/analytics" label="Analytics" icon={LineChart} />
         <RailButton to="#" label="Study Plan" icon={BookOpen} disabled />
         <RailButton to="#" label="Notifications" icon={Bell} disabled dot />
         <RailButton to="#" label="Settings" icon={Settings} disabled />
