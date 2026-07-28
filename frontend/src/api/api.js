@@ -20,6 +20,7 @@ async function authFetch(path, options = {}) {
 export const getDashboardStats  = () => authFetch('/api/stats')
 export const getSolvedQuestions = () => authFetch('/api/solved')
 export const getAttemptedData   = () => authFetch('/api/attempted')
+export const getAnalytics       = () => authFetch('/api/analytics')
 export const getAnalytics       = () => authFetch('/api/user/analytics')
 
 export const updateProfile = (data) =>
