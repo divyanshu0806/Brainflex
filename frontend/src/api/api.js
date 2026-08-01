@@ -28,11 +28,7 @@ export const deleteAccount  = ()     => authFetch('/api/user',          { method
 
 export const getProfile = () => authFetch('/api/user/profile')
 
-export const updateProfile = (name, phone) =>
-  authFetch('/api/user/profile', {
-    method: 'PUT',
-    body: JSON.stringify({ name, phone }),
-  })
+
 
 export const changePassword = (currentPassword, newPassword) =>
   authFetch('/api/user/password', {
