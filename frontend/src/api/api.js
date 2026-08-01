@@ -22,11 +22,23 @@ export const getSolvedQuestions = () => authFetch('/api/solved')
 export const getAttemptedData   = () => authFetch('/api/attempted')
 export const getAnalytics       = () => authFetch('/api/analytics')
 
-export const updateProfile = (data) =>
-  authFetch('/api/user/profile', { method: 'PUT', body: JSON.stringify(data) })
+export const updateProfile  = (data) => authFetch('/api/user/profile',  { method: 'PATCH', body: JSON.stringify(data) })
+export const updatePassword = (data) => authFetch('/api/user/password', { method: 'PATCH', body: JSON.stringify(data) })
+export const deleteAccount  = ()     => authFetch('/api/user',          { method: 'DELETE' })
 
-export const changePassword = (data) =>
-  authFetch('/api/user/password', { method: 'PUT', body: JSON.stringify(data) })
+export const getProfile = () => authFetch('/api/user/profile')
+
+export const updateProfile = (name, phone) =>
+  authFetch('/api/user/profile', {
+    method: 'PUT',
+    body: JSON.stringify({ name, phone }),
+  })
+
+export const changePassword = (currentPassword, newPassword) =>
+  authFetch('/api/user/password', {
+    method: 'PUT',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
 
 export const getQuestions = (params = {}) => {
   const query = new URLSearchParams(params).toString()
