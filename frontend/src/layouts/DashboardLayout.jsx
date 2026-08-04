@@ -1,4 +1,5 @@
 import { useStreak } from '../hooks/useStreak.js'
+import { useTheme } from '../hooks/useTheme.js'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -18,6 +19,7 @@ import {
   Trophy,
   Volume2,
   Moon,
+  Sun,
   LogOut,
   LayoutDashboard,
 } from 'lucide-react'
@@ -51,6 +53,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const currentStreak = useStreak()
+  const { isDark, toggleTheme } = useTheme()
   const crumb = CRUMBS[location.pathname] || CRUMBS['/dashboard']
   const CrumbIcon = crumb.icon
 
@@ -85,7 +88,6 @@ export default function DashboardLayout() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Close on scroll/resize so a stale popover doesn't drift away from its trigger
   useEffect(() => {
     if (!openDropdown) return
     function close() {
@@ -109,32 +111,51 @@ export default function DashboardLayout() {
         <div className="absolute w-[500px] h-[500px] rounded-full blur-[110px] opacity-30 bottom-[18%] right-[8%] bg-[radial-gradient(ellipse,rgba(244,114,182,0.18),transparent_70%)] animate-[drift1_15s_ease-in-out_infinite_reverse]" />
       </div>
 
-      {/* RAIL */}
-      <aside className="relative z-10 w-14 flex-shrink-0 flex flex-col items-center py-4 gap-1 bg-void/70 border-r border-white/[0.06] backdrop-blur-xl">
-        <div className="w-9 h-9 rounded-xl blue-gradient-bg flex items-center justify-center font-display font-black text-sm text-white mb-3 flex-shrink-0">
-          B
+      {/* EXPANDABLE SIDEBAR ON HOVER */}
+      <aside className="group/sidebar relative z-30 w-16 hover:w-56 transition-all duration-300 ease-in-out flex-shrink-0 flex flex-col py-4 px-2.5 gap-1 bg-void/80 border-r border-white/[0.06] backdrop-blur-xl overflow-hidden">
+        {/* Brand Logo Header */}
+        <div className="flex items-center gap-3 px-1 mb-4 flex-shrink-0 h-9">
+          <div className="w-9 h-9 rounded-xl blue-gradient-bg flex items-center justify-center font-display font-black text-sm text-white flex-shrink-0 shadow-lg">
+            B
+          </div>
+          <span className="font-display font-bold text-base whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 text-white">
+            Brain<span className="blue-gradient-text">Flex</span>
+          </span>
         </div>
 
-        {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-          <RailButton key={to} to={to} label={label} icon={Icon} end={end} />
-        ))}
+        {/* Primary Navigation */}
+        <div className="flex flex-col gap-1 w-full">
+          {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+            <RailButton key={to} to={to} label={label} icon={Icon} end={end} />
+          ))}
+        </div>
 
-        <div className="w-7 h-px bg-white/[0.07] my-2" />
+        <div className="w-full h-px bg-white/[0.07] my-3 flex-shrink-0" />
 
-        <RailButton to="/dashboard/analytics" label="Analytics" icon={LineChart} />
-        <RailButton to="#" label="Study Plan" icon={BookOpen} disabled />
-        <RailButton to="#" label="Notifications" icon={Bell} disabled dot />
-        <RailButton to="/dashboard/settings" label="Settings" icon={Settings} />
+        {/* Secondary Navigation */}
+        <div className="flex flex-col gap-1 w-full">
+          <RailButton to="/dashboard/analytics" label="Analytics" icon={LineChart} />
+          <RailButton to="#" label="Study Plan" icon={BookOpen} disabled />
+          <RailButton to="#" label="Notifications" icon={Bell} disabled dot />
+          <RailButton to="/dashboard/settings" label="Settings" icon={Settings} />
+        </div>
 
-        <div className="mt-auto w-9 h-9 rounded-xl bg-gradient-to-br from-violet-400 to-pink-400 flex items-center justify-center font-display font-black text-xs text-white cursor-pointer hover:scale-105 transition flex-shrink-0">
-          {initials}
+        {/* Bottom Profile Badge */}
+        <div className="mt-auto flex items-center gap-3 p-1 rounded-xl hover:bg-white/[0.05] transition cursor-pointer w-full flex-shrink-0 overflow-hidden">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-400 to-pink-400 flex items-center justify-center font-display font-black text-xs text-white flex-shrink-0 shadow-md">
+            {initials}
+          </div>
+          <div className="flex flex-col opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 overflow-hidden whitespace-nowrap">
+            <span className="text-xs font-bold text-text truncate">{user?.name || 'User'}</span>
+            <span className="text-[0.65rem] text-text-3 truncate">{user?.email || 'Student'}</span>
+          </div>
         </div>
       </aside>
 
       {/* MAIN AREA */}
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
         {/* TOPBAR */}
-        <header className="relative z-30 h-[62px] flex-shrink-0 flex items-center justify-between px-7 bg-void/50 border-b border-white/[0.06] backdrop-blur-xl">
+        <header className="relative z-20 h-[62px] flex-shrink-0 flex items-center justify-between px-7 bg-void/50 border-b border-white/[0.06] backdrop-blur-xl">
           <div className="flex items-center gap-2.5">
             <span className="font-display font-black text-lg tracking-tight">
               <span className="blue-gradient-text">Brain</span>Flex
@@ -181,24 +202,25 @@ export default function DashboardLayout() {
         </main>
       </div>
 
-      {/* PORTALED POPOVERS — render outside the dashboard DOM tree entirely,
-          so backdrop-blur stacking contexts on cards below can never bury them. */}
+      {/* PORTALED POPOVERS */}
       {openDropdown === 'notifs' && (
         <AnchoredPopover anchorRef={notifsRef} popoverRef={popoverRef} width={320}>
           <NotificationsPopoverContent />
         </AnchoredPopover>
       )}
       {openDropdown === 'user' && (
-  <AnchoredPopover anchorRef={userRef} popoverRef={popoverRef} width={240}>
-    <UserPopoverContent 
-      user={user} 
-      initials={initials} 
-      onLogout={handleLogout}
-      navigate={navigate}
-      onClose={() => setOpenDropdown(null)}
-    />
-  </AnchoredPopover>
-)}
+        <AnchoredPopover anchorRef={userRef} popoverRef={popoverRef} width={240}>
+          <UserPopoverContent 
+            user={user} 
+            initials={initials} 
+            onLogout={handleLogout}
+            navigate={navigate}
+            onClose={() => setOpenDropdown(null)}
+            isDark={isDark}
+            toggleTheme={toggleTheme}
+          />
+        </AnchoredPopover>
+      )}
 
       <style>{`
         @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(60px,-40px) scale(1.1)} 66%{transform:translate(-40px,60px) scale(.95)} }
@@ -209,11 +231,6 @@ export default function DashboardLayout() {
   )
 }
 
-/**
- * Renders its children into document.body, positioned just below/right-aligned
- * to the anchor element's current bounding box. Escapes every ancestor
- * stacking context (backdrop-blur cards, overflow containers, etc.) entirely.
- */
 function AnchoredPopover({ anchorRef, popoverRef, width, children }) {
   const [coords, setCoords] = useState(null)
 
@@ -251,15 +268,17 @@ function AnchoredPopover({ anchorRef, popoverRef, width, children }) {
 
 function RailButton({ to, label, icon: Icon, end, disabled, dot }) {
   const base =
-    'relative w-9 h-9 rounded-xl flex items-center justify-center transition group flex-shrink-0'
+    'relative w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl transition-all duration-200 group flex-shrink-0'
 
   const content = (
     <>
-      <Icon size={16} />
-      {dot && (
-        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-pink-400 ring-2 ring-void" />
-      )}
-      <span className="pointer-events-none absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 whitespace-nowrap bg-[#0a0c19] border border-white/10 rounded-md px-2.5 py-1 text-xs font-medium opacity-0 group-hover:opacity-100 transition z-50">
+      <div className="relative flex-shrink-0">
+        <Icon size={18} />
+        {dot && (
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-pink-400 ring-2 ring-void" />
+        )}
+      </div>
+      <span className="text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">
         {label}
       </span>
     </>
@@ -278,7 +297,7 @@ function RailButton({ to, label, icon: Icon, end, disabled, dot }) {
       className={({ isActive }) =>
         `${base} cursor-pointer ${
           isActive
-            ? 'bg-white/[0.08] text-text border border-white/10'
+            ? 'bg-white/[0.08] text-text border border-white/10 shadow-sm'
             : 'text-text-3 hover:bg-white/[0.05] hover:text-text-2 border border-transparent'
         }`
       }
@@ -326,7 +345,7 @@ function NotificationsPopoverContent() {
   )
 }
 
-function UserPopoverContent({ user, initials, onLogout, navigate, onClose })  {
+function UserPopoverContent({ user, initials, onLogout, navigate, onClose, isDark, toggleTheme }) {
   return (
     <>
       <div className="px-2 pt-1 pb-2.5 border-b border-white/[0.07] mb-1.5">
@@ -341,14 +360,14 @@ function UserPopoverContent({ user, initials, onLogout, navigate, onClose })  {
         </div>
       </div>
 
-      <PopoverRow icon={LayoutDashboard} label="Dashboard"    onClick={() => { navigate('/dashboard');          onClose() }} />
-<PopoverRow icon={User}            label="Edit Profile" onClick={() => { navigate('/dashboard/settings'); onClose() }} />
-<PopoverRow icon={Trophy}          label="Achievements"  onClick={() => { navigate('/dashboard/solved');   onClose() }} />
+      <PopoverRow icon={LayoutDashboard} label="Dashboard" onClick={() => { navigate('/dashboard'); onClose() }} />
+      <PopoverRow icon={User} label="Edit Profile" onClick={() => { navigate('/dashboard/settings'); onClose() }} />
+      <PopoverRow icon={Trophy} label="Achievements" onClick={() => { navigate('/dashboard/solved'); onClose() }} />
 
       <div className="h-px bg-white/[0.07] my-1.5" />
 
       <ToggleRow icon={Volume2} label="Sound" defaultOn />
-      <ToggleRow icon={Moon} label="Dark Mode" defaultOn />
+      <ToggleRow icon={isDark ? Moon : Sun} label="Dark Mode" value={isDark} onToggle={toggleTheme} />
       <ToggleRow icon={Bell} label="Notifs" defaultOn />
 
       <div className="h-px bg-white/[0.07] my-1.5" />
@@ -378,8 +397,7 @@ function PopoverRow({ icon: Icon, label, danger, onClick }) {
   )
 }
 
-function ToggleRow({ icon: Icon, label, defaultOn }) {
-  const [on, setOn] = useState(defaultOn)
+function ToggleRow({ icon: Icon, label, value, onToggle }) {
   return (
     <div className="flex items-center justify-between px-2.5 py-1.5 text-sm text-text-2">
       <div className="flex items-center gap-2.5">
@@ -387,16 +405,15 @@ function ToggleRow({ icon: Icon, label, defaultOn }) {
         {label}
       </div>
       <button
-        onClick={() => setOn((v) => !v)}
+        type="button"
+        onClick={onToggle}
         className={`w-9 h-5 rounded-full relative cursor-pointer transition flex-shrink-0 ${
-          on ? 'bg-blue-500' : 'bg-white/10'
+          value ? 'bg-blue-500' : 'bg-white/10'
         }`}
       >
-        <span
-          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-            on ? 'translate-x-4' : 'translate-x-0'
-          }`}
-        />
+        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform ${
+          value ? 'translate-x-4 bg-white' : 'translate-x-0 bg-gray-600'
+        }`} />
       </button>
     </div>
   )
