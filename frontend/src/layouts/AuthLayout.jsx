@@ -53,8 +53,11 @@ export default function AuthLayout({ children, leftContent }) {
 function Logo() {
   return (
     <div className="flex items-center gap-3">
-      {/* Empty logo slot — drop a mark/image in here later */}
-      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10" />
+      <img 
+        src="/logo.png" 
+        alt="BrainFlex Logo" 
+        className="w-9 h-9 object-contain" 
+      />
       <span className="font-display font-black text-lg tracking-tight">
         <span className="blue-gradient-text">Brain</span>Flex
       </span>

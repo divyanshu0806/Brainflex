@@ -38,6 +38,7 @@ const CRUMBS = {
   '/dashboard/attempted': { icon: NotebookPen, label: 'Attempted' },
   '/dashboard/analytics': { icon: LineChart, label: 'Analytics' },
   '/dashboard/settings': { icon: Settings, label: 'Settings' },
+  '/dashboard/study-plan': { icon: BookOpen, label: 'Study Plan' },
 }
 
 const NOTIFICATIONS = [
@@ -114,14 +115,16 @@ export default function DashboardLayout() {
       {/* EXPANDABLE SIDEBAR ON HOVER */}
       <aside className="group/sidebar relative z-30 w-16 hover:w-56 transition-all duration-300 ease-in-out flex-shrink-0 flex flex-col py-4 px-2.5 gap-1 bg-void/80 border-r border-white/[0.06] backdrop-blur-xl overflow-hidden">
         {/* Brand Logo Header */}
-        <div className="flex items-center gap-3 px-1 mb-4 flex-shrink-0 h-9">
-          <div className="w-9 h-9 rounded-xl blue-gradient-bg flex items-center justify-center font-display font-black text-sm text-white flex-shrink-0 shadow-lg">
-            B
-          </div>
-          <span className="font-display font-bold text-base whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 text-white">
-            Brain<span className="blue-gradient-text">Flex</span>
-          </span>
-        </div>
+<div className="flex items-center gap-3 px-1 mb-4 flex-shrink-0 h-9">
+  <img 
+    src="/logo.png" 
+    alt="BrainFlex Logo" 
+    className="w-9 h-9 object-contain flex-shrink-0"
+  />
+  <span className="font-display font-bold text-base whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 text-white">
+    Brain<span className="blue-gradient-text">Flex</span>
+  </span>
+</div>
 
         {/* Primary Navigation */}
         <div className="flex flex-col gap-1 w-full">
@@ -135,7 +138,7 @@ export default function DashboardLayout() {
         {/* Secondary Navigation */}
         <div className="flex flex-col gap-1 w-full">
           <RailButton to="/dashboard/analytics" label="Analytics" icon={LineChart} />
-          <RailButton to="#" label="Study Plan" icon={BookOpen} disabled />
+          <RailButton to="/dashboard/study-plan" label="Study Plan" icon={BookOpen} />
           <RailButton to="#" label="Notifications" icon={Bell} disabled dot />
           <RailButton to="/dashboard/settings" label="Settings" icon={Settings} />
         </div>

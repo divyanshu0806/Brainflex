@@ -9,6 +9,7 @@ import Attempted from './pages/Attempted.jsx'
 import QuizPage from './pages/QuizPage.jsx'
 import Analytics from './pages/Analytics.jsx'
 import Settings from './pages/Settings.jsx'
+import StudyPlan from './pages/StudyPlan.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="quiz/:id" element={<QuizPage />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="study-plan" element={<StudyPlan />} />
       </Route>
     </Routes>
   )
