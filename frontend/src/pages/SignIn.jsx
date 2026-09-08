@@ -15,6 +15,17 @@ export default function SignIn() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // 🆕 Google success handler
+  const handleGoogleSuccess = (token, user) => {
+    login(token, user)
+    navigate('/dashboard')
+  }
+
+  // 🆕 Google error handler
+  const handleGoogleError = (errMessage) => {
+    setError(errMessage)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -94,7 +105,12 @@ export default function SignIn() {
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        <GoogleButton label="Continue with Google" />
+        {/* ⚠️ UPDATED: Added onSuccess and onError props */}
+        <GoogleButton
+          label="Continue with Google"
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+        />
 
         <div className="text-center text-xs text-text-2 mt-1">
           New here?{' '}

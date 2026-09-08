@@ -54,3 +54,9 @@ export const getExplanation = (question_id, option_id) =>
     method: 'POST',
     body: JSON.stringify({ question_id, option_id }),
   })
+
+export const chatWithTutor = ({ question_id, selected_option_id, messages }) =>
+  authFetch('/api/explain/chat', {
+    method: 'POST',
+    body: JSON.stringify({ question_id, selected_option_id, messages }),
+  })

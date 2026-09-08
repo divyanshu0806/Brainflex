@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Sparkles, Lock, Trophy } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, Loader2, Sparkles, Lock, Trophy, Volume2, VolumeX, Pause, Play } from 'lucide-react'
 import { getQuestion, submitAnswer, getExplanation } from '../api/api.js'
 import { GlassCard } from '../components/GlassCard.jsx'
+import AITutorChat from '../components/AITutorChat.jsx'
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D']
 
@@ -25,7 +26,19 @@ export default function QuizPage() {
   const [explainLoading, setExplainLoading] = useState(false)
   const [error, setError]                   = useState(null)
 
+  // Audio Speech state
+  const [isSpeaking, setIsSpeaking]         = useState(false)
+  const [isPaused, setIsPaused]             = useState(false)
+  const [speechRate, setSpeechRate]         = useState(1.0)
+
   useEffect(() => {
+    // Cancel any ongoing speech when question changes or unmounts
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+    setIsSpeaking(false)
+    setIsPaused(false)
+
     setLoading(true)
     setSelectedOption(null)
     setLocked(false)
@@ -37,7 +50,74 @@ export default function QuizPage() {
       .then((data) => setQuestion(data.question))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
+
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
   }, [id])
+
+  // Speech helper
+  function toggleSpeech() {
+    if (!window.speechSynthesis || !explanation) return
+
+    if (isSpeaking && !isPaused) {
+      window.speechSynthesis.pause()
+      setIsPaused(true)
+      return
+    }
+
+    if (isSpeaking && isPaused) {
+      window.speechSynthesis.resume()
+      setIsPaused(false)
+      return
+    }
+
+    window.speechSynthesis.cancel()
+
+    // Clean text for speech
+    const cleanText = explanation
+      .replace(/[#*•_`~]/g, '')
+      .replace(/✅|❌|🔴|🟢/g, '')
+      .replace(/AI Overview:/gi, '')
+      .trim()
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.rate = speechRate
+
+    utterance.onend = () => {
+      setIsSpeaking(false)
+      setIsPaused(false)
+    }
+
+    utterance.onerror = () => {
+      setIsSpeaking(false)
+      setIsPaused(false)
+    }
+
+    window.speechSynthesis.speak(utterance)
+    setIsSpeaking(true)
+    setIsPaused(false)
+  }
+
+  function stopSpeech() {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+    setIsSpeaking(false)
+    setIsPaused(false)
+  }
+
+  function cycleRate() {
+    const rates = [1.0, 1.25, 1.5]
+    const nextRate = rates[(rates.indexOf(speechRate) + 1) % rates.length]
+    setSpeechRate(nextRate)
+    if (isSpeaking) {
+      // Re-trigger with new rate
+      stopSpeech()
+    }
+  }
 
   async function handleLockAnswer() {
     if (!selectedOption || locked) return
@@ -63,6 +143,7 @@ export default function QuizPage() {
   }
 
   function handleNext() {
+    stopSpeech()
     if (nextId) {
       sessionStorage.setItem('quiz_index', String(currentIndex + 1))
       navigate(`/dashboard/quiz/${nextId}`)
@@ -123,7 +204,7 @@ export default function QuizPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/dashboard/problems')}
+            onClick={() => { stopSpeech(); navigate('/dashboard/problems') }}
             className="w-9 h-9 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center text-text-2 hover:text-text hover:border-white/20 transition cursor-pointer"
           >
             <ArrowLeft size={16} />
@@ -213,9 +294,50 @@ export default function QuizPage() {
       {/* AI Overview */}
       {locked && (
         <GlassCard className="p-7 rounded-2xl">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles size={16} className="text-blue-400" />
-            <span className="text-sm font-bold blue-gradient-text uppercase tracking-wide">AI Overview</span>
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-blue-400" />
+              <span className="text-sm font-bold blue-gradient-text uppercase tracking-wide">AI Overview</span>
+            </div>
+
+            {/* Audio narration TTS controls */}
+            {explanation && !explainLoading && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleSpeech}
+                  className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition cursor-pointer ${
+                    isSpeaking
+                      ? 'bg-blue-500/20 border-blue-400/40 text-blue-300'
+                      : 'bg-white/[0.04] border-white/10 text-text-2 hover:text-text hover:bg-white/[0.08]'
+                  }`}
+                >
+                  {isSpeaking ? (
+                    isPaused ? <Play size={13} className="text-blue-300" /> : <Pause size={13} className="text-blue-300" />
+                  ) : (
+                    <Volume2 size={13} className="text-blue-400" />
+                  )}
+                  <span>{isSpeaking ? (isPaused ? 'Resume' : 'Pause') : 'Listen'}</span>
+                </button>
+
+                {isSpeaking && (
+                  <button
+                    onClick={stopSpeech}
+                    className="p-1.5 rounded-lg border border-white/10 bg-white/[0.04] text-text-3 hover:text-pink-400 hover:border-pink-500/30 transition cursor-pointer"
+                    title="Stop Audio"
+                  >
+                    <VolumeX size={13} />
+                  </button>
+                )}
+
+                <button
+                  onClick={cycleRate}
+                  title="Playback Speed"
+                  className="text-[0.68rem] font-bold px-2 py-1 rounded-lg border border-white/10 bg-white/[0.04] text-text-3 hover:text-text transition cursor-pointer"
+                >
+                  {speechRate}x
+                </button>
+              </div>
+            )}
           </div>
 
           {explainLoading ? (
@@ -236,11 +358,20 @@ export default function QuizPage() {
         </GlassCard>
       )}
 
+      {/* Ask AI Tutor (Interactive Doubt Chat) */}
+      {locked && explanation && !explainLoading && (
+        <AITutorChat
+          questionId={parseInt(id)}
+          selectedOptionId={selectedOption}
+          questionTopic={question?.topic}
+        />
+      )}
+
       {/* Next / Finish button */}
       {locked && (
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate('/dashboard/problems')}
+            onClick={() => { stopSpeech(); navigate('/dashboard/problems') }}
             className="text-sm text-text-2 hover:text-text transition cursor-pointer"
           >
             ← Back to Problems

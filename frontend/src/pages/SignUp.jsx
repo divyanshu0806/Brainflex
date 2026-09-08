@@ -23,6 +23,17 @@ export default function SignUp() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // 🆕 Google success handler
+  const handleGoogleSuccess = (token, user) => {
+    login(token, user)
+    navigate('/dashboard')
+  }
+
+  // 🆕 Google error handler
+  const handleGoogleError = (errMessage) => {
+    setError(errMessage)
+  }
+
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
@@ -164,7 +175,11 @@ export default function SignUp() {
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        <GoogleButton label="Continue with Google" />
+        <GoogleButton
+          label="Continue with Google"
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+        />
 
         <div className="text-center text-xs text-text-2 mt-1">
           Already have an account?{' '}
